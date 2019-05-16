@@ -125,11 +125,10 @@ class DataSet(object):
                 # print(gt_label_path)
                 # print ('\n')
                 # cv2.imshow('image',label_img)
-
                 label_binary = np.zeros([label_img.shape[0], label_img.shape[1]], dtype=np.uint8)
                 pdb.set_trace()
+                #idx = np.where((label_img[:, :, :] != [0, 0, 0]).all(axis=2))
                 idx = np.where((label_img[:, :, :] != [0, 0, 0]).all(axis=2))
-                label_binary[idx] = 1
                 gt_labels_binary.append(label_binary)
 
             for gt_label_path in gt_label_instance_list:
