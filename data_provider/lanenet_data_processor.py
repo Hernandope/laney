@@ -115,7 +115,7 @@ class DataSet(object):
                 # print(label_img)
 
             for gt_label_path in gt_label_binary_list:
-                label_img = cv2.imread(gt_label_path, cv2.IMREAD_UNCHANGED)
+                label_img = cv2.imread(gt_label_path, cv2.IMREAD_COLOR)
                 # #try2
                 # print ('\n')
                 # print(gt_label_path)
