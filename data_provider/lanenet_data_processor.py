@@ -127,9 +127,9 @@ class DataSet(object):
                 # print ('\n')
                 # cv2.imshow('image',label_img)
                 label_binary = np.zeros([label_img.shape[0], label_img.shape[1]], dtype=np.uint8)
-                pdb.set_trace()
+                # pdb.set_trace()
                 #idx = np.where((label_img[:, :, :] != [0, 0, 0]).all(axis=2))
-                idx = np.where((label_img[:, :] != [0, 0, 0]).all(axis=2))
+                idx = np.where((label_img[:, :] != [0]).all(axis=1))
                 label_binary[idx] = 1
                 gt_labels_binary.append(label_binary)
 
