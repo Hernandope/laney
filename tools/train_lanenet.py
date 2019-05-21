@@ -23,6 +23,8 @@ from config import global_config
 from lanenet_model import lanenet_merge_model
 from data_provider import lanenet_data_processor
 
+import pdb
+
 CFG = global_config.cfg
 VGG_MEAN = [103.939, 116.779, 123.68]
 
@@ -231,11 +233,14 @@ def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
                                     binary_label_tensor: binary_gt_labels,
                                     instance_label_tensor: instance_gt_labels,
                                     phase: phase_train})
-
+            #saves image that causes binary loss and cost to be NaN
             if math.isnan(c) or math.isnan(binary_loss) or math.isnan(instance_loss):
                 log.error('cost is: {:.5f}'.format(c))
                 log.error('binary cost is: {:.5f}'.format(binary_loss))
                 log.error('instance cost is: {:.5f}'.format(instance_loss))
+
+
+                print('\nNan Images have been saved\n')
                 cv2.imwrite('nan_image.png', gt_imgs[0] + VGG_MEAN)
                 cv2.imwrite('nan_instance_label.png', instance_gt_labels[0])
                 cv2.imwrite('nan_binary_label.png', binary_gt_labels[0] * 255)

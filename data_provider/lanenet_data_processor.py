@@ -105,8 +105,10 @@ class DataSet(object):
             gt_labels_binary = []
             gt_labels_instance = []
 
+            print('\nreading train images:\n')
             for gt_img_path in gt_img_list:
                 gt_imgs.append(cv2.imread(gt_img_path, cv2.IMREAD_COLOR))
+                print(gt_img_path)
                 # #try2
                 # label_img = cv2.imread(gt_img_path,1)
                 # print ('\n')
