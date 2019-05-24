@@ -233,12 +233,12 @@ def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
                                     binary_label_tensor: binary_gt_labels,
                                     instance_label_tensor: instance_gt_labels,
                                     phase: phase_train})
+
             #saves image that causes binary loss and cost to be NaN
             if math.isnan(c) or math.isnan(binary_loss) or math.isnan(instance_loss):
                 log.error('cost is: {:.5f}'.format(c))
                 log.error('binary cost is: {:.5f}'.format(binary_loss))
                 log.error('instance cost is: {:.5f}'.format(instance_loss))
-
 
                 print('\nNan Images have been saved\n')
                 cv2.imwrite('nan_image.png', gt_imgs[0] + VGG_MEAN)
