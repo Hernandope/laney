@@ -37,8 +37,10 @@ def init_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--dataset_dir', type=str, help='The training dataset dir path')
+    parser.add_argument('--new_name', type=str, help='Specify new trained model name')
+    parser.add_argument('--ckpt_save_dir', type=str, help='Choose new checkpoint save path')
     parser.add_argument('--net', type=str, help='Which base net work to use', default='vgg')
-    parser.add_argument('--weights_path', type=str, help='The pretrained weights path')
+    parser.add_argument('--pretrain_dir', type=str, help='Choose the pretrained weights path')
 
     return parser.parse_args()
 
@@ -57,12 +59,12 @@ def minmax_scale(input_arr):
     return output_arr
 
 
-def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
+def train_net(dataset_dir, new_name, ckpt_save_dir, pretrain_dir=None, net_flag='vgg'):
     """
 
     :param dataset_dir:
     :param net_flag: choose which base network to use
-    :param weights_path:
+    :param pretrain_dir:
     :return:
     """
     train_dataset_file = ops.join(dataset_dir, 'train.txt')
@@ -122,11 +124,11 @@ def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
 
     # Set tf saver
     saver = tf.train.Saver()
-    model_save_dir = 'model/tusimple_lanenet'
+    model_save_dir = ckpt_save_dir
     if not ops.exists(model_save_dir):
         os.makedirs(model_save_dir)
     train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
-    model_name = 'tusimple_lanenet_{:s}_{:s}.ckpt'.format(net_flag, str(train_start_time))
+    model_name = new_name + '_{:s}_{:s}.ckpt'.format(net_flag, str(train_start_time))
     model_save_path = ops.join(model_save_dir, model_name)
 
     # Set tf summary
@@ -170,16 +172,16 @@ def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
         tf.train.write_graph(graph_or_graph_def=sess.graph, logdir='',
                              name='{:s}/lanenet_model.pb'.format(model_save_dir))
 
-        if weights_path is None:
+        if pretrain_dir is None:
             log.info('Training from scratch')
             init = tf.global_variables_initializer()
             sess.run(init)
         else:
-            log.info('Restore model from last model checkpoint {:s}'.format(weights_path))
-            saver.restore(sess=sess, save_path=weights_path)
+            log.info('Restore model from last model checkpoint {:s}'.format(pretrain_dir))
+            saver.restore(sess=sess, save_path=pretrain_dir)
 
         # 加载预训练参数
-        if net_flag == 'vgg' and weights_path is None:
+        if net_flag == 'vgg' and pretrain_dir is None:
             pretrained_weights = np.load(
                 './data/vgg16.npy',
                 encoding='latin1').item()
@@ -199,7 +201,7 @@ def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
             # training part
             t_start = time.time()
 
-            with tf.device('/cpu:0'):
+            with tf.device('/gpu:0'):
                 gt_imgs, binary_gt_labels, instance_gt_labels = train_dataset.next_batch(CFG.TRAIN.BATCH_SIZE)
                 gt_imgs = [cv2.resize(tmp,
                                       dsize=(CFG.TRAIN.IMG_WIDTH, CFG.TRAIN.IMG_HEIGHT),
@@ -262,7 +264,7 @@ def train_net(dataset_dir, weights_path=None, net_flag='vgg'):
             summary_writer.add_summary(summary=train_summary, global_step=epoch)
 
             # validation part
-            with tf.device('/cpu:0'):
+            with tf.device('/gpu:0'):
                 gt_imgs_val, binary_gt_labels_val, instance_gt_labels_val \
                     = val_dataset.next_batch(CFG.TRAIN.VAL_BATCH_SIZE)
                 gt_imgs_val = [cv2.resize(tmp,
@@ -326,4 +328,4 @@ if __name__ == '__main__':
     args = init_args()
 
     # train lanenet
-    train_net(args.dataset_dir, args.weights_path, net_flag=args.net)
+    train_net(args.dataset_dir, args.new_name, args.ckpt_save_dir, args.pretrain_dir, net_flag=args.net)
