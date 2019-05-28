@@ -40,7 +40,7 @@ def init_args():
     parser.add_argument('--weights_path', type=str, help='The model weights path')
     parser.add_argument('--is_batch', type=str, help='If test a batch of images', default='false')
     parser.add_argument('--batch_size', type=int, help='The batch size of the test images', default=32)
-    parser.add_argument('--save_dir', type=str, help='Test result image save dir', default=None)
+    parser.add_argument('--save_dir', type=str, help='Test result image save dir. To replace original image, use replace param', default=None)
     parser.add_argument('--use_gpu', type=int, help='If use gpu set 1 or 0 instead', default=1)
 
     return parser.parse_args()
@@ -145,10 +145,11 @@ def test_lanenet_batch(image_dir, weights_path, batch_size, use_gpu, save_dir=No
     """
     assert ops.exists(image_dir), '{:s} not exist'.format(image_dir)
 
-    log.info('开始获取图像文件路径...')
+    log.info('Getting the image file path...')
     image_path_list = glob.glob('{:s}/**/*.jpg'.format(image_dir), recursive=True) + \
                       glob.glob('{:s}/**/*.png'.format(image_dir), recursive=True) + \
                       glob.glob('{:s}/**/*.jpeg'.format(image_dir), recursive=True)
+    # import pdb; pdb.set_trace()
 
     input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 256, 512, 3], name='input_tensor')
     phase_tensor = tf.constant('test', tf.string)
@@ -179,7 +180,7 @@ def test_lanenet_batch(image_dir, weights_path, batch_size, use_gpu, save_dir=No
         epoch_nums = int(math.ceil(len(image_path_list) / batch_size))
 
         for epoch in range(epoch_nums):
-            log.info('[Epoch:{:d}] 开始图像读取和预处理...'.format(epoch))
+            log.info('[Epoch:{:d}] Start image reading and preprocessing...'.format(epoch))
             t_start = time.time()
             image_path_epoch = image_path_list[epoch * batch_size:(epoch + 1) * batch_size]
             image_list_epoch = [cv2.imread(tmp, cv2.IMREAD_COLOR) for tmp in image_path_epoch]
@@ -188,14 +189,14 @@ def test_lanenet_batch(image_dir, weights_path, batch_size, use_gpu, save_dir=No
                                 for tmp in image_list_epoch]
             image_list_epoch = [tmp - VGG_MEAN for tmp in image_list_epoch]
             t_cost = time.time() - t_start
-            log.info('[Epoch:{:d}] 预处理{:d}张图像, 共耗时: {:.5f}s, 平均每张耗时: {:.5f}'.format(
+            log.info('[Epoch:{:d}] Pretreatment{:d}image, total time consuming: {:.5f}s, Average time per sheet: {:.5f}'.format(
                 epoch, len(image_path_epoch), t_cost, t_cost / len(image_path_epoch)))
 
             t_start = time.time()
             binary_seg_images, instance_seg_images = sess.run(
                 [binary_seg_ret, instance_seg_ret], feed_dict={input_tensor: image_list_epoch})
             t_cost = time.time() - t_start
-            log.info('[Epoch:{:d}] 预测{:d}张图像车道线, 共耗时: {:.5f}s, 平均每张耗时: {:.5f}s'.format(
+            log.info('[Epoch:{:d}] Prediction{:d}image lane line, total time consuming: {:.5f}s, Average time per sheet: {:.5f}s'.format(
                 epoch, len(image_path_epoch), t_cost, t_cost / len(image_path_epoch)))
 
             cluster_time = []
@@ -219,13 +220,18 @@ def test_lanenet_batch(image_dir, weights_path, batch_size, use_gpu, save_dir=No
                     plt.show()
                     plt.ioff()
 
-                if save_dir is not None:
+                if save_dir == 'replace':
+                    mask_image = cv2.addWeighted(image_vis_list[index], 1.0, mask_image, 1.0, 0)
+                    image_save_path = image_path_epoch[index]
+                    cv2.imwrite(image_save_path, mask_image)
+
+                elif save_dir is not None:
                     mask_image = cv2.addWeighted(image_vis_list[index], 1.0, mask_image, 1.0, 0)
                     image_name = ops.split(image_path_epoch[index])[1]
                     image_save_path = ops.join(save_dir, image_name)
                     cv2.imwrite(image_save_path, mask_image)
 
-            log.info('[Epoch:{:d}] 进行{:d}张图像车道线聚类, 共耗时: {:.5f}s, 平均每张耗时: {:.5f}'.format(
+            log.info('[Epoch:{:d}] Execute{:d}Image lane line clustering, total time consuming: {:.5f}s, Average time per sheet: {:.5f}'.format(
                 epoch, len(image_path_epoch), np.sum(cluster_time), np.mean(cluster_time)))
 
     sess.close()
@@ -237,7 +243,7 @@ if __name__ == '__main__':
     # init args
     args = init_args()
 
-    if args.save_dir is not None and not ops.exists(args.save_dir):
+    if args.save_dir is not None and not ops.exists(args.save_dir) and args.save_dir != 'replace':
         log.error('{:s} not exist and has been made'.format(args.save_dir))
         os.makedirs(args.save_dir)
 
