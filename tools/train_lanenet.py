@@ -75,7 +75,7 @@ def train_net(dataset_dir, new_name, ckpt_save_dir, pretrain_dir=None, net_flag=
     train_dataset = lanenet_data_processor.DataSet(train_dataset_file)
     val_dataset = lanenet_data_processor.DataSet(val_dataset_file)
 
-    with tf.device('/gpu:1'):
+    with tf.device('/gpu:0'):
         input_tensor = tf.placeholder(dtype=tf.float32,
                                       shape=[CFG.TRAIN.BATCH_SIZE, CFG.TRAIN.IMG_HEIGHT,
                                              CFG.TRAIN.IMG_WIDTH, 3],
@@ -201,7 +201,7 @@ def train_net(dataset_dir, new_name, ckpt_save_dir, pretrain_dir=None, net_flag=
             # training part
             t_start = time.time()
 
-            with tf.device('/gpu:0'):
+            with tf.device('/gpu:1'):
                 gt_imgs, binary_gt_labels, instance_gt_labels = train_dataset.next_batch(CFG.TRAIN.BATCH_SIZE)
                 gt_imgs = [cv2.resize(tmp,
                                       dsize=(CFG.TRAIN.IMG_WIDTH, CFG.TRAIN.IMG_HEIGHT),

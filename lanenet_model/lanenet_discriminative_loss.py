@@ -8,8 +8,20 @@
 """
 实现LaneNet的Discriminative Loss函数
 """
+
+
 import tensorflow as tf
 
+### Fix the gradient function
+from tensorflow.python.framework import function
+
+@function.Defun(tf.float32, tf.float32)
+def norm_grad(x, dy):
+    return dy*(x/tf.norm(x))
+
+@function.Defun(tf.float32, grad_func=norm_grad)
+def norm(x):
+    return tf.norm(x)
 
 def discriminative_loss_single(
         prediction,
@@ -55,7 +67,7 @@ def discriminative_loss_single(
 
     # 计算公式的loss(var)
     # distance = tf.norm(tf.subtract(mu_expand, reshaped_pred), axis=1)
-    distance = tf.norm(tf.subtract(mu_expand, reshaped_pred), ord=1, axis=1)
+    distance = tf.norm(tf.subtract(mu_expand, reshaped_pred), ord=2, axis=1)
     distance = tf.subtract(distance, delta_v)
     distance = tf.clip_by_value(distance, 0., distance)
     distance = tf.square(distance)
@@ -83,7 +95,7 @@ def discriminative_loss_single(
     mu_diff_bool = tf.boolean_mask(mu_diff, bool_mask)
 
     # mu_norm = tf.norm(mu_diff_bool, axis=1)
-    mu_norm = tf.norm(mu_diff_bool,ord=1, axis=1)
+    mu_norm = tf.norm(mu_diff_bool,ord=2, axis=1)
     mu_norm = tf.subtract(2. * delta_d, mu_norm)
     mu_norm = tf.clip_by_value(mu_norm, 0., mu_norm)
     mu_norm = tf.square(mu_norm)
@@ -92,7 +104,7 @@ def discriminative_loss_single(
 
     # 计算原始Discriminative Loss论文中提到的正则项损失
     # l_reg = tf.reduce_mean(tf.norm(mu, axis=1
-    l_reg = tf.reduce_mean(tf.norm(mu, ord=1,axis=1))
+    l_reg = tf.reduce_mean(tf.norm(mu, ord=2,axis=1))
 
     # 合并损失按照原始Discriminative Loss论文中提到的参数合并
     param_scale = 1.
