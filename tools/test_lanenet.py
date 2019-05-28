@@ -70,13 +70,13 @@ def test_lanenet(image_path, weights_path, use_gpu):
     """
     assert ops.exists(image_path), '{:s} not exist'.format(image_path)
 
-    log.info('开始读取图像数据并进行预处理')
+    log.info('Start reading image data and pre-processing')
     t_start = time.time()
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
     image_vis = image
     image = cv2.resize(image, (512, 256), interpolation=cv2.INTER_LINEAR)
     image = image - VGG_MEAN
-    log.info('图像读取完毕, 耗时: {:.5f}s'.format(time.time() - t_start))
+    log.info('Image is read, time consuming: {:.5f}s'.format(time.time() - t_start))
 
     input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 256, 512, 3], name='input_tensor')
     phase_tensor = tf.constant('test', tf.string)
@@ -108,7 +108,7 @@ def test_lanenet(image_path, weights_path, use_gpu):
         binary_seg_image, instance_seg_image = sess.run([binary_seg_ret, instance_seg_ret],
                                                         feed_dict={input_tensor: [image]})
         t_cost = time.time() - t_start
-        log.info('单张图像车道线预测耗时: {:.5f}s'.format(t_cost))
+        log.info('Single image lane line prediction time consuming: {:.5f}s'.format(t_cost))
 
         binary_seg_image[0] = postprocessor.postprocess(binary_seg_image[0])
         mask_image = cluster.get_lane_mask(binary_seg_ret=binary_seg_image[0],
@@ -149,7 +149,6 @@ def test_lanenet_batch(image_dir, weights_path, batch_size, use_gpu, save_dir=No
     image_path_list = glob.glob('{:s}/**/*.jpg'.format(image_dir), recursive=True) + \
                       glob.glob('{:s}/**/*.png'.format(image_dir), recursive=True) + \
                       glob.glob('{:s}/**/*.jpeg'.format(image_dir), recursive=True)
-    # import pdb; pdb.set_trace()
 
     input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 256, 512, 3], name='input_tensor')
     phase_tensor = tf.constant('test', tf.string)
