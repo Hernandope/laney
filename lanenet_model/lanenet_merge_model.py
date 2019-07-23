@@ -156,6 +156,10 @@ class LaneNet(cnn_basenet.CNNBaseModel):
             pix_embedding = self.conv2d(inputdata=decode_deconv, out_channel=4, kernel_size=1,
                                         use_bias=False, name='pix_embedding_conv')
             pix_embedding = self.relu(inputdata=pix_embedding, name='pix_embedding_relu')
+            print("\n==========================================================================================\n")
+            print(binary_seg_ret)
+            print("\n==========================================================================================\n")
+            print(pix_embedding)
 
             return binary_seg_ret, pix_embedding
 
